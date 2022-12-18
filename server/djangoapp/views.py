@@ -9,6 +9,8 @@ from django.contrib import messages
 from datetime import datetime
 import logging
 import json
+from . import restapis
+from . import models
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -81,14 +83,62 @@ def registration_request(request):
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
+        url = 'https://57681ee4.us-south.apigw.appdomain.cloud/api/dealership'
+        # Get dealers from the URL
+        dealerships = restapis.get_dealers_from_cf(url)
+        context = {"dealerships": dealerships}
+        # Concat all dealer's short name
+        #dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
         return render(request, 'djangoapp/index.html', context)
 
 
-# Create a `get_dealer_details` view to render the reviews of a dealer
-# def get_dealer_details(request, dealer_id):
-# ...
+def get_dealer_details(request, dealer_id):
+    context = {}
+    if request.method == "GET":
+        # Get reviews from the URL
+        reviews = restapis.get_dealer_reviews_from_cf('https://57681ee4.us-south.apigw.appdomain.cloud/api/review', dealer_id)
+        context['review_list'] = reviews
+        context['dealer_id'] = dealer_id
+        return render(request, 'djangoapp/dealer_details.html', context)
 
-# Create a `add_review` view to submit a review
-# def add_review(request, dealer_id):
-# ...
+def add_review(request, dealer_id):
+    context = {}
+    if request.method == "GET":
+        context["dealer_id"] = dealer_id
+        context['cars'] = models.CarModel.objects.filter(dealer_id = dealer_id)
+        return render(request, 'djangoapp/add_review.html', context)
+
+    if request.method == "POST":
+        user = request.user
+        if not user.is_authenticated:
+            context["error_message"] = "Please login at first"
+            context["dealer_id"] = dealer_id
+            print("Not logged in!")
+            return redirect("/djangoapp/login", context)
+        review = {}
+        review["id"] = 0
+        review["name"] = request.user.first_name + " " + request.user.last_name
+        review["dealership"] = dealer_id
+        review["review"] = request.POST["review"]
+        review["purchase"] = request.POST.get("purchasecheck") == 'on'
+        if request.POST.get("purchasecheck") == 'on':
+            review["purchase_date"] = request.POST["purchasedate"]
+            car = models.CarModel.objects.get(pk=request.POST["car"])
+            review["car_make"] = car.make.name
+            review["car_model"] = car.name
+            review["car_year"]= car.year.strftime("%Y")
+        json_payload = {}
+        json_payload["review"] = review
+        print(json_payload)
+        result = restapis.post_request("https://us-south.functions.cloud.ibm.com/api/v1/namespaces/63f4d470-d652-4ffe-9a4b-ccc0bf6b10c4/actions/dealership-package/post-review", json_payload, dealerId=dealer_id)
+        print("POST request result: ", result)
+        if result == True:
+            context["success_message"] = "Review submitted!"
+            print("Success")
+        else:
+            context["error_message"] = "ERROR: Review not submitted."
+            print("Failed")
+        context["dealer_id"] = dealer_id
+        return redirect("/djangoapp/dealer/" + str(dealer_id), context)
 
