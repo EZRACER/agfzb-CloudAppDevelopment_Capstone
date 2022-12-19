@@ -6,7 +6,6 @@ from ibm_watson import NaturalLanguageUnderstandingV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson.natural_language_understanding_v1 import Features, SentimentOptions
 
-
 def get_request(url, **kwargs):
     print(kwargs)
     print("GET from {} ".format(url))
@@ -19,20 +18,21 @@ def get_request(url, **kwargs):
         print(response.text)
         json_data = json.loads(response.text)
         return json_data
-        if api_key:
-               #Basic authentication GET
-             response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs, auth=HTTPBasicAuth('apikey', api_key))
-        else:
-               #no authentication GET
-             response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs)
+        #if api_key:
+        #    # Basic authentication GET
+        #    response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs, auth=HTTPBasicAuth('apikey', api_key))
+        #else:
+        #    # no authentication GET
+        #    response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs)
     except:
         # If any error occurs
         print("Network exception occurred")
         status_code = "Network exception occurred"
         print("With status {} ".format(status_code))
-        return 
+        return response
 
-
+# Create a `post_request` to make HTTP POST requests
+# e.g., response = requests.post(url, params=kwargs, json=payload)
 def post_request(url, json_payload, **kwargs):
     print(kwargs)
     try:
@@ -41,7 +41,6 @@ def post_request(url, json_payload, **kwargs):
         response = "Something went wrong"
     print (response)
     return response
-
 
 
 def get_dealers_from_cf(url, **kwargs):
@@ -61,7 +60,23 @@ def get_dealers_from_cf(url, **kwargs):
                                    st=dealer_doc["st"], zip=dealer_doc["zip"])
             results.append(dealer_obj)
 
-    return 
+    return results
+
+
+def get_dealer_by_id_from_cf(url, dealer_id):
+    json_result = get_request(url, id=dealer_id)
+
+    if json_result:
+        dealers = json_result["entries"]
+        for dealer in dealers:
+            if dealer_id == review["id"]:
+                dealer_obj = CarDealer(address=dealer["address"], city=dealer["city"], full_name=dealer["full_name"],
+                                    id=dealer["id"], lat=dealer["lat"], long=dealer["long"],
+                                    short_name=dealer["short_name"],state=dealer["state"],
+                                    st=dealer["st"], zip=dealer["zip"])
+            return dealer_obj
+
+    return None
 
 
 def get_dealer_reviews_from_cf(url, dealer_id):
@@ -86,7 +101,6 @@ def get_dealer_reviews_from_cf(url, dealer_id):
     print(results)
     return results
 
-
 def analyze_review_sentiments(text):
     result = "Not checked"
     api_key = "b8O4i8tOtC0I3a6eCpGVOh-59gA9IsTkes9tnxPEQ9vo"
@@ -108,7 +122,7 @@ def analyze_review_sentiments(text):
     print(sentiment_score)
     print(sentiment_label)
     sentimentresult = sentiment_label
-    return 
+    return sentimentresult
 
 
 

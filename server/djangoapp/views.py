@@ -17,22 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 # Create your views here.
-def static(request):
-    context = {}
-    if request.method == "GET":
-        return render(request, 'djangoapp/static.html', context)
 
 
+# Create an `about` view to render a static about page
 def about(request):
     context = {}
     if request.method == "GET":
         return render(request, 'djangoapp/about.html', context)
 
+# Create a `contact` view to return a static contact page
 def contact(request):
     context = {}
     if request.method == "GET":
-        return render (request, 'djangoapp/contact.html', context)
+        return render(request, 'djangoapp/contact.html', context)
 
+# Create a `login_request` view to handle sign in request
+# def login_request(request):
 def login_request(request):
     context = {}
     if request.method == "POST":
@@ -47,11 +47,14 @@ def login_request(request):
     else:
         return render(request, 'djangoapp/index.html', context)
 
+# Create a `logout_request` view to handle sign out request
+# def logout_request(request):
 def logout_request(request):
     context = {}
     logout(request)
     return render(request, 'djangoapp/index.html', context)
 
+# Create a `registration_request` view to handle sign up request
 def registration_request(request):
     context = {}
     # If it is a GET request, just render the registration page
@@ -93,6 +96,7 @@ def get_dealerships(request):
         return render(request, 'djangoapp/index.html', context)
 
 
+# Create a `get_dealer_details` view to render the reviews of a dealer
 def get_dealer_details(request, dealer_id):
     context = {}
     if request.method == "GET":
@@ -102,6 +106,7 @@ def get_dealer_details(request, dealer_id):
         context['dealer_id'] = dealer_id
         return render(request, 'djangoapp/dealer_details.html', context)
 
+# Create a `add_review` view to submit a review
 def add_review(request, dealer_id):
     context = {}
     if request.method == "GET":
@@ -131,7 +136,7 @@ def add_review(request, dealer_id):
         json_payload = {}
         json_payload["review"] = review
         print(json_payload)
-        result = restapis.post_request("https://us-south.functions.cloud.ibm.com/api/v1/namespaces/63f4d470-d652-4ffe-9a4b-ccc0bf6b10c4/actions/dealership-package/post-review", json_payload, dealerId=dealer_id)
+        result = restapis.post_request("https://57681ee4.us-south.apigw.appdomain.cloud/api/review", json_payload, dealerId=dealer_id)
         print("POST request result: ", result)
         if result == True:
             context["success_message"] = "Review submitted!"
